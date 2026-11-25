@@ -1,0 +1,4 @@
+@"
+data/
+.git_backup/
+"@ | Set-Content .gitignore

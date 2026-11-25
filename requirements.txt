@@ -1,0 +1,3 @@
+numpy
+opencv-python
+# Optional: open3d
