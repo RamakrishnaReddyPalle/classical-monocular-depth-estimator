@@ -6,11 +6,7 @@ Classical CV pipeline using Shi-Tomasi features, pyramidal Lucas-Kanade tracking
 
 ### **Demo**
 
-<p align="center">
-  <video src="https://github.com/user-attachments/assets/09ff2702-0b46-4ce7-a9a7-445fb25fea12" controls muted playsinline width="100%">
-    Your browser does not support embedded videos.
-  </video>
-</p>
+https://github.com/user-attachments/assets/09ff2702-0b46-4ce7-a9a7-445fb25fea12
 
 ### **Structure**
 
