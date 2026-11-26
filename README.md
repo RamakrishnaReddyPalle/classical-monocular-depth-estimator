@@ -6,9 +6,7 @@ Classical CV pipeline using Shi-Tomasi features, pyramidal Lucas-Kanade tracking
 
 ### **Demo**
 
-<p align="center">
-  <img src="demo.gif" width="100%" alt="Classical Monocular Depth Estimator Demo">
-</p>
+[▶ Watch Classical Monocular Depth Estimator Demo](https://github.com/RamakrishnaReddyPalle/classical-monocular-depth-estimator/releases/download/v1.0/depth_analysis_browser.mp4)
 
 ### **Structure**
 
