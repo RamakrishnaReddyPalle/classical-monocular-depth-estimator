@@ -12,6 +12,8 @@ import visualizer
 
 import base64
 import mimetypes
+import re
+import textwrap
 
 
 # --------------------------------------------------
@@ -28,7 +30,7 @@ GITHUB_URL = (
 )
 
 # Replace this placeholder with the direct GitHub PPT release-asset URL.
-PPT_URL = "https://github.com/RamakrishnaReddyPalle/classical-monocular-depth-estimator/assets/123456/Classical_Monocular_Depth_Estimator.pptx"
+PPT_URL = "https://github.com/RamakrishnaReddyPalle/classical-monocular-depth-estimator/releases"
 
 MAX_UPLOAD_MB = 500
 
@@ -194,6 +196,15 @@ st.markdown(
         font-size: 13px;
         margin-bottom: 4px;
     }
+    /* LaTeX report text: left aligned and scaled for smaller screens. */
+    .stLatex .katex-display {
+        text-align: left !important;
+        margin: 0.55rem 0 0.85rem 0 !important;
+        overflow-x: visible !important;
+    }
+    .stLatex .katex {
+        font-size: clamp(0.72rem, 1.05vw, 1rem);
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -245,7 +256,7 @@ def render_project_header():
                 <div style="font-size:14px; margin-top:8px; line-height:1.9;">
                     Ramakrishna Reddy Palle<br>
                     Ashmit Kaur<br>
-                    Niloy
+                    Niloy Dev
                 </div>
             </div>
             """,
@@ -794,9 +805,10 @@ def render_report():
         st.divider()
 
 
-    # --------------------------------------------------
-    # VIDEO CONVERSION
-    # --------------------------------------------------
+
+# --------------------------------------------------
+# VIDEO CONVERSION
+# --------------------------------------------------
 
 def convert_video_for_browser(input_path):
     input_path = Path(input_path)
@@ -911,7 +923,7 @@ else:
 
                 st.video(uploaded_video)
 
-                if st.button(
+                if st.session_state.result is None and st.button(
                     "Run Depth Estimation",
                     type="primary",
                     use_container_width=True
@@ -1063,39 +1075,32 @@ else:
         else:
             st.info("The processed depth video will appear here.")
 
-        st.divider()
 
-        st.subheader("3D Reconstruction")
+    # --------------------------------------------------
+    # FULL-WIDTH 3D RECONSTRUCTION
+    # --------------------------------------------------
 
-        if st.session_state.result is not None:
+    st.divider()
+    st.subheader("3D Reconstruction")
+    st.caption(
+        "Note: The interactive 3D viewer may not work on some mobile devices."
+    )
 
-            cloud_path = st.session_state.result.get("latest_point_cloud")
+    if st.session_state.result is not None:
+        cloud_path = st.session_state.result.get("latest_point_cloud")
 
-            if cloud_path and Path(cloud_path).exists():
-
-                st.caption(
-                    "Inspect the reconstructed point cloud using the "
-                    "native Open3D viewer."
-                )
-
-                if st.button(
-                    "Open Interactive 3D Viewer",
-                    type="primary",
-                    use_container_width=True
-                ):
-                    try:
-                        visualizer.show_point_cloud(cloud_path)
-                    except Exception as e:
-                        st.error(f"Could not open the 3D viewer: {e}")
-
-            else:
-                st.warning(
-                    "No valid point cloud was generated. "
-                    "Try a recording with more camera translation."
-                )
-
+        if cloud_path and Path(cloud_path).exists():
+            try:
+                visualizer.show_point_cloud_streamlit(cloud_path)
+            except Exception as e:
+                st.error(f"Could not render the 3D reconstruction: {e}")
         else:
-            st.info("The 3D point cloud will appear here after processing.")
+            st.warning(
+                "No valid point cloud was generated. "
+                "Try a recording with more camera translation."
+            )
+    else:
+        st.info("The 3D point cloud will appear here after processing.")
 
     # --------------------------------------------------
     # FOOTER

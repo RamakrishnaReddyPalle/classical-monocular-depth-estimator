@@ -5,3 +5,4 @@ numpy
 Pillow
 imageio-ffmpeg
 open3d
+plotly

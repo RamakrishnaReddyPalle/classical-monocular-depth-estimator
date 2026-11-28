@@ -2,7 +2,87 @@
 import os
 import cv2
 import numpy as np
+import streamlit as st
+import plotly.graph_objects as go
 
+def show_point_cloud_streamlit(path):
+    """Render an interactive 3D point cloud inside Streamlit."""
+
+    import open3d as o3d
+
+    cloud = o3d.io.read_point_cloud(str(path))
+
+    if cloud.is_empty():
+        st.error("The point cloud is empty.")
+        return
+
+    cloud = cloud.voxel_down_sample(voxel_size=0.005)
+
+    points = np.asarray(cloud.points)
+
+    if len(points) == 0:
+        st.error("No valid 3D points found.")
+        return
+
+    # Limit the number of points for browser performance.
+    if len(points) > 40000:
+        indices = np.linspace(
+            0, len(points) - 1, 40000
+        ).astype(int)
+
+        points = points[indices]
+
+        if cloud.has_colors():
+            colors = np.asarray(cloud.colors)[indices]
+        else:
+            colors = None
+
+    elif cloud.has_colors():
+        colors = np.asarray(cloud.colors)
+    else:
+        colors = None
+
+    if colors is not None:
+        colors = [
+            f"rgb({int(r*255)},{int(g*255)},{int(b*255)})"
+            for r, g, b in colors
+        ]
+    else:
+        colors = "#20a4d8"
+
+    fig = go.Figure(
+        data=[
+            go.Scatter3d(
+                x=points[:, 0],
+                y=points[:, 1],
+                z=points[:, 2],
+                mode="markers",
+                marker=dict(
+                    size=1.5,
+                    color=colors,
+                    opacity=0.85
+                )
+            )
+        ]
+    )
+
+    fig.update_layout(
+        title="Monocular 3D Reconstruction",
+        height=700,
+        margin=dict(l=0, r=0, b=0, t=45),
+        scene=dict(
+            aspectmode="data",
+            xaxis_title="X",
+            yaxis_title="Y",
+            zaxis_title="Z"
+        )
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"scrollZoom": True}
+    )
 
 def make_depth_visualization(depth_map, output_size=None):
     """Create a high-contrast, colourful depth visualization."""
