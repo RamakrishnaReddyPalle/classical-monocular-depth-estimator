@@ -6,25 +6,83 @@ import streamlit as st
 import plotly.graph_objects as go
 
 def show_point_cloud_streamlit(path):
-    """Render an interactive 3D point cloud inside Streamlit."""
+    """Render an ASCII PLY point cloud directly inside Streamlit."""
 
-    import open3d as o3d
+    import streamlit as st
+    import plotly.graph_objects as go
 
-    cloud = o3d.io.read_point_cloud(str(path))
+    # Read the PLY header.
+    with open(path, "r", encoding="utf-8") as f:
+        header = []
+        while True:
+            line = f.readline()
+            if not line:
+                raise ValueError("Invalid PLY file: header is incomplete.")
 
-    if cloud.is_empty():
-        st.error("The point cloud is empty.")
-        return
+            header.append(line.strip())
 
-    cloud = cloud.voxel_down_sample(voxel_size=0.005)
+            if line.strip() == "end_header":
+                break
 
-    points = np.asarray(cloud.points)
+        if "format ascii 1.0" not in header:
+            raise ValueError("Only ASCII PLY files are supported.")
+
+        vertex_line = next(
+            (line for line in header if line.startswith("element vertex ")),
+            None
+        )
+
+        if vertex_line is None:
+            raise ValueError("PLY file does not contain vertex information.")
+
+        vertex_count = int(vertex_line.split()[-1])
+
+        if vertex_count == 0:
+            st.error("The point cloud contains no vertices.")
+            return
+
+        # Read vertex data directly using NumPy.
+        points_data = np.loadtxt(
+            f,
+            max_rows=vertex_count,
+            dtype=np.float32
+        )
+
+    if points_data.ndim == 1:
+        points_data = points_data.reshape(1, -1)
+
+    if points_data.shape[1] < 3:
+        raise ValueError("PLY file does not contain valid XYZ coordinates.")
+
+    points = points_data[:, :3]
+
+    # Read RGB values if available.
+    if points_data.shape[1] >= 6:
+        colors = np.clip(
+            points_data[:, 3:6], 0, 255
+        ).astype(np.uint8)
+
+        colors = [
+            f"rgb({r},{g},{b})"
+            for r, g, b in colors
+        ]
+    else:
+        colors = "#20a4d8"
+
+    # Remove invalid points.
+    valid = np.all(np.isfinite(points), axis=1)
+    points = points[valid]
+
+    if isinstance(colors, list):
+        colors = [
+            color for color, keep in zip(colors, valid) if keep
+        ]
 
     if len(points) == 0:
         st.error("No valid 3D points found.")
         return
 
-    # Limit the number of points for browser performance.
+    # Limit points for browser performance.
     if len(points) > 40000:
         indices = np.linspace(
             0, len(points) - 1, 40000
@@ -32,23 +90,8 @@ def show_point_cloud_streamlit(path):
 
         points = points[indices]
 
-        if cloud.has_colors():
-            colors = np.asarray(cloud.colors)[indices]
-        else:
-            colors = None
-
-    elif cloud.has_colors():
-        colors = np.asarray(cloud.colors)
-    else:
-        colors = None
-
-    if colors is not None:
-        colors = [
-            f"rgb({int(r*255)},{int(g*255)},{int(b*255)})"
-            for r, g, b in colors
-        ]
-    else:
-        colors = "#20a4d8"
+        if isinstance(colors, list):
+            colors = [colors[i] for i in indices]
 
     fig = go.Figure(
         data=[
@@ -69,6 +112,7 @@ def show_point_cloud_streamlit(path):
     fig.update_layout(
         title="Monocular 3D Reconstruction",
         height=700,
+        autosize=True,
         margin=dict(l=0, r=0, b=0, t=45),
         scene=dict(
             aspectmode="data",

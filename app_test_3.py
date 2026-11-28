@@ -30,7 +30,7 @@ GITHUB_URL = (
 )
 
 # Replace this placeholder with the direct GitHub PPT release-asset URL.
-PPT_URL = "https://github.com/RamakrishnaReddyPalle/classical-monocular-depth-estimator/releases"
+PPT_URL = "https://github.com/RamakrishnaReddyPalle/classical-monocular-depth-estimator/blob/main/assets/Classical_Monocular_Depth_Estimator.pptx"
 
 MAX_UPLOAD_MB = 500
 
